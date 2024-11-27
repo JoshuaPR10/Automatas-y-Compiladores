@@ -1,0 +1,135 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+// Variables globales para contadores
+int comentario_linea = 0;
+int comentario_multiple = 0;
+int constantes_int = 0;
+int constantes_float = 0;
+int operadores = 0;
+int simbolos_especiales = 0;
+int palabras_reservadas = 0;
+
+void analizarCodigo(const string& codigo) {
+    vector<string> reservadas = {
+        "auto", "break", "case", "char", "const", "continue", "default", "do", 
+        "double", "else", "enum", "extern", "float", "for", "goto", "if", 
+        "int", "long", "register", "return", "short", "signed", "sizeof", 
+        "static", "struct", "switch", "typedef", "union", "unsigned", "void", 
+        "volatile", "while", "class", "public", "private", "protected", 
+        "template", "typename", "using", "namespace", "virtual", "this", 
+        "try", "catch", "new", "delete", "operator", "bool", "true", "false", 
+        "inline"};
+
+    vector<char> simbolos = {'(', ')', '{', '}', '[', ']', ';', ',', '.'};
+
+    size_t pos = 0;
+
+    while (pos < codigo.size()) {
+        // Detectar comentarios
+        if (codigo[pos] == '/' && pos + 1 < codigo.size() && codigo[pos + 1] == '/') {
+            comentario_linea++;
+            pos = codigo.find('\n', pos + 2);
+            continue;
+        } else if (codigo[pos] == '/' && pos + 1 < codigo.size() && codigo[pos + 1] == '*') {
+            comentario_multiple++;
+            pos = codigo.find("*/", pos + 2) + 2;
+            continue;
+        }
+
+        // Detectar palabras reservadas
+        for (const string& palabra : reservadas) {
+            if (codigo.substr(pos, palabra.size()) == palabra && 
+                (pos + palabra.size() == codigo.size() || !isalnum(codigo[pos + palabra.size()]))) {
+                palabras_reservadas++;
+                pos += palabra.size();
+                break;
+            }
+        }
+
+        // Detectar constantes numéricas
+        if (isdigit(codigo[pos])) {
+            size_t end = pos;
+            while (end < codigo.size() && (isdigit(codigo[end]) || codigo[end] == '.')) {
+                end++;
+            }
+            if (codigo.substr(pos, end - pos).find('.') != string::npos) {
+                constantes_float++;
+            } else {
+                constantes_int++;
+            }
+            pos = end;
+            continue;
+        }
+
+        // Detectar operadores
+        if (codigo[pos] == '+' || codigo[pos] == '-' || codigo[pos] == '*' || 
+            codigo[pos] == '/' || codigo[pos] == '%' || codigo[pos] == '>' || 
+            codigo[pos] == '<' || codigo[pos] == '=' || codigo[pos] == '!') {
+            operadores++;
+            pos++;
+            continue;
+        }
+
+        // Detectar símbolos especiales
+        if (find(simbolos.begin(), simbolos.end(), codigo[pos]) != simbolos.end()) {
+            simbolos_especiales++;
+            pos++;
+            continue;
+        }
+
+        pos++;
+    }
+}
+
+int main() {
+    // Código fuente a analizar
+    string codigo = R"(
+        #include <iostream>
+        using namespace std;
+
+        /*
+        Este es un comentario
+        de múltiples líneas.
+        */
+
+        int main() {
+            int a = 5;       
+            float b = 10.5;   
+            char c = 'x';     
+
+            int suma = a + 10;
+            int resta = a - 2;
+            int producto = a * 3;
+            int division = a / 2;
+            int modulo = a % 2;
+
+            bool resultado = (a > 2) && (b < 20);
+
+            cout << "Constantes: " << 42 << " " << 3.14 << endl;
+
+            if (a == 5) {
+                cout << "Símbolos especiales y operadores funcionan bien." << endl;
+            }
+
+            return 0;
+        }
+    )";
+
+    analizarCodigo(codigo);
+
+    // Mostrar resultados
+    cout << "--- Resumen del análisis ---" << endl;
+    cout << "Comentarios de línea: " << comentario_linea << endl;
+    cout << "Comentarios múltiples: " << comentario_multiple << endl;
+    cout << "Constantes enteras: " << constantes_int << endl;
+    cout << "Constantes flotantes: " << constantes_float << endl;
+    cout << "Operadores: " << operadores << endl;
+    cout << "Símbolos especiales: " << simbolos_especiales << endl;
+    cout << "Palabras reservadas: " << palabras_reservadas << endl;
+
+    return 0;
+}
